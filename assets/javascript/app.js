@@ -12,6 +12,9 @@
 
   var database = firebase.database();
 
+  // used to clear the data
+  // firebase.database().ref().remove(); 
+
   // Button for adding Trains
   $("#add-train-btn").on("click", function (event) {
   	event.preventDefault();
@@ -33,12 +36,6 @@
   	// Uploads train data to the database
   	database.ref().push(newTrain);
 
-  	// Logs everything to the console
-  	console.log(newTrain.name);
-  	console.log(newTrain.destination);
-  	console.log(newTrain.train);
-  	console.log(newTrain.frequency);
-
   	// Alert
   	alert("Train information successfully added");
 
@@ -53,33 +50,42 @@
   // Create Firebase event for adding train to the database and a row in the HTML
   database.ref().on("child_added", function(childSnapshot, prevChildKey) {
 
-  	console.log(childSnapshot.val());
+  	// New variable to hold 'childSnapshot.val();'
+  	var train = childSnapshot.val();
 
   	// Store everything into a variable
-  	var trainName = childSnapshot.val().name;
-  	var trainDestination = childSnapshot.val().destination;
-  	var trainTime = childSnapshot.val().train;
-  	var trainFrequency = childSnapshot.val().frequency;
+  	var firstTime = train.train;
 
-  	// Train information
-  	console.log(trainName);
-  	console.log(trainDestination);
-  	console.log(trainTime);
-  	console.log(trainFrequency);
+  	var firstTimeValues = firstTime.split(':');
 
-  	// Prettify the train input
-  	// var trainStartPretty = moment.unix(trainTime).format("MM/DD/YY");
+  	var firstMinutes = firstTimeValues[0] * 60 + Number(firstTimeValues[1]);
 
-  	// Calculate the next arrival time
-  	var trainArrival = moment().diff(moment.unix(trainTime, "X"), "arrival");
-  	console.log(trainArrival);
+  	var currentMinutes = moment().format('HH') * 60 + Number(moment().format('mm'));
 
-  	// Calculate the total minutes away
-  	var minutesAway = trainArrival * trainFrequency;
-  	console.log(minutesAway);
+  	var difference = currentMinutes - firstMinutes;
 
+  	// Number of trains
+  	var totalTrains = difference % train.frequency;
+
+  	// Gives you the minutes away
+  	var minutesAway = train.frequency - totalTrains;
+
+  	// hh:mm a gives you the am or pm for time
+  	var arrivalTime = moment().add(minutesAway, 'minutes').format('hh:mm a');
+
+  	console.log(difference, totalTrains, minutesAway);
+  	
   	// Add each train's data into the table
-  	$("#train-table > tbody").append("<tr><td>" + trainName + "</td><td>" + trainDestination + "</td><td>" + trainFrequency + "</td><td>" + trainArrival + "</td><td>" + trainTime + "</td><td>" + minutesAway + "</td><td>");
+  	$("#train-table > tbody").append(
+  		"<tr>" +
+	  		"<td>" + train.name + "</td>" +
+	  		"<td>" + train.destination + "</td>" +
+	  		"<td>" + train.frequency + "</td>" +
+	  		"<td>" + firstTime + "</td>" +
+	  		"<td>" + arrivalTime + "</td>" +
+	  		"<td>" + minutesAway + "</td>" +
+	  	"</tr>"
+	);
 
   });
 
